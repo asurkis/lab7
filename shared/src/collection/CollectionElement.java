@@ -1,6 +1,7 @@
 package collection;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Objects;
@@ -19,6 +20,12 @@ public class CollectionElement implements Serializable, Cloneable, Comparable<Co
 
     public CollectionElement(String name, double size, double x, double y) {
         this(name, size, new Position(x, y));
+    }
+
+    public CollectionElement withCreationDate(LocalDateTime creationDate) {
+        CollectionElement element = this.clone();
+        element.creationDate = creationDate;
+        return element;
     }
 
     public CollectionElement() {

@@ -12,6 +12,11 @@ public class CollectionInfo implements Serializable {
         this.elementCount = elementCount;
     }
 
+    @Override
+    public String toString() {
+        return String.format("Collection of %d elements created at %s", elementCount, creationDate);
+    }
+
     public LocalDateTime getCreationDate() {
         return creationDate;
     }

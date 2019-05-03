@@ -21,10 +21,10 @@ public class Server implements Runnable, AutoCloseable {
         try (Server server = new Server(args)) {
             server.run();
         } catch (InvalidCommandLineArgumentException e) {
-            System.err.println("Usage: server <port> <uri> <user>");
-            System.err.println("<port> -- integer between 1024 and 65 535");
-            System.err.println("<uri> -- URI of the database");
-            System.err.println("<user> -- login for localhost database");
+            System.out.println("Usage: server <port> <uri> <user>");
+            System.out.println("<port> -- integer between 1024 and 65 535");
+            System.out.println("<uri> -- URI of the database");
+            System.out.println("<user> -- login for localhost database");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,11 +51,9 @@ public class Server implements Runnable, AutoCloseable {
             throw new InvalidCommandLineArgumentException();
         }
 
-        String password = new String(System.console().readPassword("Password: "));
+        // String password = new String(System.console().readPassword("Password: "));
+        String password = "";
         database = new PostgreSQLDatabase(args[1], args[2], password);
-
-        /*Runtime.getRuntime().addShutdownHook(new Thread(this::save));
-        load();*/
 
         channel = DatagramChannel.open();
         channel.bind(new InetSocketAddress(port));
@@ -68,6 +66,7 @@ public class Server implements Runnable, AutoCloseable {
     }
 
     public void run() {
+        System.out.println(database.info());
         MessageProcessor messageProcessor = new MessageProcessor();
         messageProcessor.setRequestProcessor(Message.Head.INFO, msg -> infoMessage());
         messageProcessor.setRequestProcessor(Message.Head.REMOVE_FIRST, msg -> {
@@ -91,18 +90,6 @@ public class Server implements Runnable, AutoCloseable {
             return null;
         });
         messageProcessor.setRequestProcessor(Message.Head.SHOW, msg -> showMessage());
-        /*messageProcessor.setRequestProcessor(Message.Head.IMPORT, msg -> {
-            importCollection(msg);
-            return null;
-        });*/
-        /*messageProcessor.setRequestProcessor(Message.Head.LOAD, msg -> {
-            load();
-            return null;
-        });*/
-        /*messageProcessor.setRequestProcessor(Message.Head.SAVE, msg -> {
-            save();
-            return null;
-        });*/
         messageProcessor.setRequestProcessor(Message.Head.STOP, msg -> {
             shouldRun = false;
             return null;
@@ -165,56 +152,4 @@ public class Server implements Runnable, AutoCloseable {
         list.sort(CollectionElement::compareTo);
         return new Message(false, Message.Head.SHOW, list);
     }
-
-    /*private void importCollection(Message msg) {
-        String text = msg.getBody().toString();
-        try {
-            Object obj = xStream.fromXML(text);
-            if (obj instanceof Collection) {
-                Collection saved = (Collection) obj;
-                if (saved.stream().allMatch(o -> o instanceof CollectionElement)) {
-                    synchronized (collection) {
-                        collection.clear();
-                        collection.addAll(saved);
-                    }
-                }
-            }
-        } catch (XStreamException ignored) {
-        }
-    }*/
-
-    /*private void load() {
-        collection.clear();
-        Object obj;
-        synchronized (xStream) {
-            try {
-                obj = xStream.fromXML(file);
-            } catch (Exception e) {
-                System.err.println("Could not load file. Using empty collection");
-                return;
-            }
-        }
-        if (obj instanceof Collection) {
-            Collection saved = (Collection) obj;
-            if (saved.stream().allMatch(o -> o instanceof CollectionElement)) {
-                synchronized (collection) {
-                    collection.addAll(saved);
-                }
-            }
-        }
-    }*/
-
-    /*private void save() {
-        synchronized (file) {
-            try (OutputStream outputStream = new FileOutputStream(file)) {
-                synchronized (xStream) {
-                    synchronized (collection) {
-                        xStream.toXML(new ArrayList<>(collection), outputStream);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }*/
 }
