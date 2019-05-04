@@ -9,35 +9,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PostgreSQLDatabase implements Database {
-    private Connection connection;
     private String uri;
     private String user;
     private String password;
 
     public PostgreSQLDatabase(String uri, String user, String password) throws SQLException {
-        connection = DriverManager.getConnection(uri, user, password);
         this.uri = uri;
         this.user = user;
         this.password = password;
 
-        PreparedStatement statement = connection.prepareStatement(
-                "CREATE TABLE IF NOT EXISTS LAB7 (" +
-                        "NAME VARCHAR NOT NULL," +
-                        "SIZE REAL NOT NULL," +
-                        "POSITION_X REAL NOT NULL," +
-                        "POSITION_Y REAL NOT NULL," +
-                        "CREATION_DATE TIMESTAMPTZ NOT NULL)");
-        statement.execute();
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS LAB7 (" +
+                            "NAME VARCHAR NOT NULL," +
+                            "SIZE REAL NOT NULL," +
+                            "POSITION_X REAL NOT NULL," +
+                            "POSITION_Y REAL NOT NULL," +
+                            "CREATION_DATE TIMESTAMPTZ NOT NULL)");
+            statement.execute();
+        }
     }
 
     @Override
-    public void close() throws Exception {
-        connection.close();
-    }
+    public void close() throws Exception {}
 
     @Override
     public List<CollectionElement> show() {
-        try {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             List<CollectionElement> result = new ArrayList<>();
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM LAB7");
             ResultSet rs = statement.executeQuery();
@@ -59,7 +57,7 @@ public class PostgreSQLDatabase implements Database {
 
     @Override
     public CollectionInfo info() {
-        try {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM LAB7");
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
@@ -73,7 +71,7 @@ public class PostgreSQLDatabase implements Database {
 
     @Override
     public void addElement(CollectionElement element) {
-        try {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("INSERT INTO LAB7" +
                     "(NAME, SIZE, POSITION_X, POSITION_Y, CREATION_DATE)" +
                     "VALUES (?, ?, ?, ?, ?)");
@@ -90,7 +88,7 @@ public class PostgreSQLDatabase implements Database {
 
     @Override
     public void removeElement(CollectionElement element) {
-        try {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
                     "DELETE FROM LAB7 WHERE " +
                             "NAME = ? AND " +
