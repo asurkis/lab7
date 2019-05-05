@@ -2,19 +2,28 @@ package net;
 
 import cli.InvalidCommandLineArgumentException;
 import collection.CollectionElement;
+import com.sun.mail.smtp.SMTPTransport;
 import db.Database;
 import db.PostgreSQLDatabase;
 
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
+import java.nio.charset.Charset;
+import java.security.Security;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
+import java.util.Properties;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Server implements Runnable, AutoCloseable {
     public static void main(String[] args) {
@@ -151,5 +160,54 @@ public class Server implements Runnable, AutoCloseable {
         List<CollectionElement> list = database.show();
         list.sort(CollectionElement::compareTo);
         return new Message(false, Message.Head.SHOW, list);
+    }
+
+    // Generate random password for user
+    private void createPassword(String email) {
+        byte[] password_bytes = new byte[10];
+        new Random().nextBytes(password_bytes);
+        String password = new String(password_bytes, Charset.forName("UTF-8"));
+    }
+
+    // Send password to email from gmail
+    // TODO InvalidMailException
+    // TODO bot-sender email account
+    private void sendPassword(String email, String password) throws MessagingException {
+        Pattern patter = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}");
+        Matcher mat = patter.matcher(email);
+
+        // Check mail for valid
+        if(!mat.matches()) {
+            //TODO raise InvalidMailException
+            return;
+        }
+
+        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
+        final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+
+        Properties props = System.getProperties();
+        props.setProperty("mail.smtps.host", "smtp.gmail.com");
+        props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
+        props.setProperty("mail.smtp.socketFactory.fallback", "false");
+        props.setProperty("mail.smtp.port", "465");
+        props.setProperty("mail.smtp.socketFactory.port", "465");
+        props.setProperty("mail.smtps.auth", "true");
+        props.put("mail.smtps.quitwait", "false");
+
+        Session session = Session.getInstance(props, null);
+
+        final MimeMessage msg = new MimeMessage(session);
+
+        msg.setFrom(new InternetAddress(email));
+        msg.setSubject("Your password");
+        msg.setText(password, "utf-8");
+        msg.setSentDate(new Date());
+
+        SMTPTransport t = (SMTPTransport)session.getTransport();
+
+        //TODO username and userpassword for sender-bot
+        t.connect("smtp.google.com", username, userpassword);
+        t.sendMessage(msg, msg.getAllRecipients());
+        t.close();
     }
 }
