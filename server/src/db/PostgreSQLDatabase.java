@@ -105,13 +105,60 @@ public class PostgreSQLDatabase implements Database {
         }
     }
 
+    //TODO table for users
     @Override
-    public void removeFirst() {
-
+    public void add_user (String email, String password) {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO ???" +
+                    "(email, password)" +
+                    "VALUES (?, ?)");
+            statement.setString(1, email);
+            statement.setString(2, password);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public void removeLast() {
+    public boolean check_user(String email, String password) {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM ??? WHERE" +
+                    "email = ? AND " +
+                    "password = ?");
+            statement.setString(1, email);
+            statement.setString(2, password);
+            statement.execute();
+            return (statement.getFetchSize() != 0 ? true : false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
+    //TODO order by?
+    @Override
+    public void removeFirst() {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement(
+                    "DELETE FROM LAB7 WHERE id IN (" +
+                            "SELECT id FROM LAB7 ORDER BY ??? DESC LIMIT 1)");
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //TODO order by?
+    @Override
+    public void removeLast() {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement(
+                    "DELETE FROM LAB7 WHERE id IN (" +
+                            "SELECT id FROM LAB7 ORDER BY ??? ASC LIMIT 1)");
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -11,6 +11,7 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.*;
+import java.security.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
@@ -18,10 +19,7 @@ import java.nio.channels.DatagramChannel;
 import java.nio.charset.Charset;
 import java.security.Security;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,6 +75,10 @@ public class Server implements Runnable, AutoCloseable {
     public void run() {
         System.out.println(database.info());
         MessageProcessor messageProcessor = new MessageProcessor();
+        messageProcessor.setRequestProcessor(Message.Head.REG, msg -> {
+            String email = msg.getBody().toString();
+            return new Message(false, Message.Head.ANSWER, createPassword(email));
+        });
         messageProcessor.setRequestProcessor(Message.Head.INFO, msg -> infoMessage());
         messageProcessor.setRequestProcessor(Message.Head.REMOVE_FIRST, msg -> {
             database.removeFirst();
@@ -163,23 +165,26 @@ public class Server implements Runnable, AutoCloseable {
     }
 
     // Generate random password for user
-    private void createPassword(String email) {
+    private boolean createPassword(String email) {
         byte[] password_bytes = new byte[10];
         new Random().nextBytes(password_bytes);
         String password = new String(password_bytes, Charset.forName("UTF-8"));
+        try {
+            sendPassword(email, password);
+        } catch (MessagingException | InvalidMailException e) {
+            return false;
+        }
+        return true;
     }
 
     // Send password to email from gmail
-    // TODO InvalidMailException
-    // TODO bot-sender email account
-    private void sendPassword(String email, String password) throws MessagingException {
+    private void sendPassword(String email, String password) throws MessagingException, InvalidMailException {
         Pattern patter = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}");
         Matcher mat = patter.matcher(email);
 
         // Check mail for valid
         if(!mat.matches()) {
-            //TODO raise InvalidMailException
-            return;
+            throw new InvalidMailException(email);
         }
 
         Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
@@ -205,9 +210,42 @@ public class Server implements Runnable, AutoCloseable {
 
         SMTPTransport t = (SMTPTransport)session.getTransport();
 
-        //TODO username and userpassword for sender-bot
-        t.connect("smtp.google.com", username, userpassword);
+        t.connect("smtp.google.com", "itmop3113lab7bot@gmail.com", "p3113lab7bot");
         t.sendMessage(msg, msg.getAllRecipients());
         t.close();
+
+        database.add_user(email, hash(password));
+    }
+
+    // Get MD5 hash of password
+    private String hash (String password) {
+        try {
+            byte[] passwordBytes = password.getBytes("UTF-8");
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] passwordHash = md5.digest(passwordBytes);
+            return passwordHash.toString();
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    // Return email from request
+    private String getEmailFromRequest (String request) {
+        String[] req = request.split("|");
+        return req[0];
+    }
+
+    // Return password from request
+    private String getPassswordFromRequest (String request) {
+        String[] req = request.split("|");
+        return req[1];
+    }
+
+    // Return true if user successfully authorized
+    private boolean authorize (String request) {
+        String email = getEmailFromRequest (request);
+        String password = getPassswordFromRequest (request);
+        return database.check_user (email, password);
     }
 }

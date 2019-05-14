@@ -16,6 +16,10 @@ public class Message implements Serializable {
         LOAD,
         SAVE,
         STOP,
+        REG,
+        AUTH,
+        ANSWER,
+        ;
     }
 
     private boolean isRequest;

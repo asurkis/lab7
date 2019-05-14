@@ -6,6 +6,7 @@ import cli.UnknownCommandException;
 import collection.CollectionElement;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
+import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
 
 import java.io.*;
 import java.net.DatagramPacket;
@@ -13,6 +14,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -172,6 +175,60 @@ public class Client implements Runnable, Closeable {
         } catch (IOException | InvalidPathException e) {
             System.err.println("Could not read file: " + e.getMessage());
             return null;
+        }
+    }
+
+    // Get MD5 hash of password
+    private String hash (String password) {
+        try {
+            byte[] passwordBytes = password.getBytes("UTF-8");
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] passwordHash = md5.digest(passwordBytes);
+            return passwordHash.toString();
+        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    // Return true if user successfully authorized
+    // TODO call in needed place
+    private boolean authorize () {
+        System.out.println("Type 'auth' to authorize and 'reg' to register");
+        try (Scanner scanner = new Scanner(System.in)) {
+            ConsoleInterface cli = new ConsoleInterface(scanner);
+            cli.setCommand("auth", line -> shouldRun = false);
+            cli.setCommand("reg",
+                    line -> register());
+
+            while (shouldRun) {
+                try {
+                    cli.execNextLine();
+                } catch (UnknownCommandException e) {
+                    System.err.println(e.getMessage());
+                } catch (NoSuchElementException ignored) {
+                    shouldRun = false;
+                }
+            }
+        }
+        System.out.println("Type your email to authorize: ");
+        try (Scanner scanner = new Scanner(System.in)) {
+            String email = scanner.nextLine();
+            System.out.println("Type your password: ");
+            String password = scanner.nextLine();
+            sendRequest(new Message(true, Message.Head.AUTH, email + "|" + password));
+        }
+        return false;
+    }
+
+    // Return true if user successfully authorized
+    private boolean register() {
+        System.out.println("Type your email: ");
+        try (Scanner scanner = new Scanner(System.in)) {
+            String email = scanner.nextLine();
+            sendRequest(new Message(true, Message.Head.REG, email));
+            boolean answer = true; //TODO receive answer from server
+            return answer;
         }
     }
 }

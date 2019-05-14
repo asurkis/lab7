@@ -12,4 +12,6 @@ public interface Database extends AutoCloseable {
     void removeElement(CollectionElement element);
     void removeFirst();
     void removeLast();
+    void add_user(String email, String password);
+    boolean check_user(String email, String password);
 }
