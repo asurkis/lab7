@@ -8,11 +8,6 @@ public class InvalidMailException extends Exception {
             this.invalidEmail = invalidEmail;
         }
 
-        @Override
-        public String getMessage() {
-            return super.getMessage();
-        }
-
         public String getInvalidEmail() {
             return invalidEmail;
         }
