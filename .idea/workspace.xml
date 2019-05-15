@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="fd9f9210-65b6-4762-966d-346a8a50fc7f" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/net/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/net/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/db/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/db/Database.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/net/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/net/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/net/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/net/Message.java" afterDir="false" />
-    </list>
+    <list default="true" id="fd9f9210-65b6-4762-966d-346a8a50fc7f" name="Default Changelist" comment="" />
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -252,12 +245,12 @@
       <workItem from="1557764926966" duration="2542000" />
       <workItem from="1557772605929" duration="619000" />
       <workItem from="1557828513569" duration="3461000" />
-      <workItem from="1557902797342" duration="5308000" />
+      <workItem from="1557902797342" duration="5550000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="13715000" />
+    <option name="totallyTimeSpent" value="13957000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="30" width="1920" height="1050" extended-state="6" />
