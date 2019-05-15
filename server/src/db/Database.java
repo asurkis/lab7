@@ -6,12 +6,13 @@ import collection.CollectionInfo;
 import java.util.List;
 
 public interface Database extends AutoCloseable {
-    List<CollectionElement> show();
-    CollectionInfo info();
-    void addElement(CollectionElement element);
-    void removeElement(CollectionElement element);
-    void removeFirst();
-    void removeLast();
-    void add_user(String email, String password);
-    boolean check_user(String email, String password);
+    List<CollectionElement> show(int user_id);
+    CollectionInfo info(int user_id);
+    void addElement(CollectionElement element, int user_id);
+    void removeElement(CollectionElement element, int user_id);
+    void removeFirst(int user_id);
+    void removeLast(int user_id);
+    void addUser(String email, String password);
+    boolean checkUser(String email, String password);
+    int getUserId(String email, String password);
 }

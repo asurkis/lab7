@@ -42,6 +42,18 @@ public class Client implements Runnable, Closeable {
 
     private int port;
 
+    private boolean authAnswer = false;
+    private static String login = "";
+    private static String password = "";
+
+    public static String getLogin() {
+        return login;
+    }
+
+    public static String getPassword() {
+        return password;
+    }
+
     public Client(String[] args) throws IOException, InvalidCommandLineArgumentException {
         if (args.length < 2) {
             throw new InvalidCommandLineArgumentException();
@@ -69,6 +81,9 @@ public class Client implements Runnable, Closeable {
                 list.forEach(System.out::println);
             }
         });
+        messageProcessor.setResponseProcessor(Message.Head.ANSWER, msg ->
+                authAnswer = (msg.getBody() == "true" ? true : false)
+        );
     }
 
     public void run() {
@@ -76,23 +91,23 @@ public class Client implements Runnable, Closeable {
             ConsoleInterface cli = new ConsoleInterface(scanner);
             cli.setCommand("exit", line -> shouldRun = false);
             cli.setCommand("stop",
-                    line -> sendRequest(new Message(true, Message.Head.STOP, null)));
+                    line -> sendRequest(new Message(true, Message.Head.STOP, null, login, password)));
             cli.setCommand("info",
-                    line -> sendRequest(new Message(true, Message.Head.INFO, null)));
+                    line -> sendRequest(new Message(true, Message.Head.INFO, null, login, password)));
             cli.setCommand("remove_first",
-                    line -> sendRequest(new Message(true, Message.Head.REMOVE_FIRST, null)));
+                    line -> sendRequest(new Message(true, Message.Head.REMOVE_FIRST, null, login, password)));
             cli.setCommand("remove_last",
-                    line -> sendRequest(new Message(true, Message.Head.REMOVE_LAST, null)));
+                    line -> sendRequest(new Message(true, Message.Head.REMOVE_LAST, null, login, password)));
             cli.setCommand("add",
                     line -> sendRequest(messageWithElement(Message.Head.ADD, line)));
             cli.setCommand("remove",
                     line -> sendRequest(messageWithElement(Message.Head.REMOVE, line)));
             cli.setCommand("show",
-                    line -> sendRequest(new Message(true, Message.Head.SHOW, null)));
+                    line -> sendRequest(new Message(true, Message.Head.SHOW, null, login, password)));
             cli.setCommand("load",
-                    line -> sendRequest(new Message(true, Message.Head.LOAD, null)));
+                    line -> sendRequest(new Message(true, Message.Head.LOAD, null, login, password)));
             cli.setCommand("save",
-                    line -> sendRequest(new Message(true, Message.Head.SAVE, null)));
+                    line -> sendRequest(new Message(true, Message.Head.SAVE, null, login, password)));
             cli.setCommand("import",
                     line -> sendRequest(importMessage(line)));
 
@@ -161,7 +176,7 @@ public class Client implements Runnable, Closeable {
     private Message messageWithElement(Message.Head head, String line) {
         try {
             CollectionElement element = gson.fromJson(line, CollectionElement.class);
-            return new Message(true, head, element);
+            return new Message(true, head, element, login, password);
         } catch (JsonParseException e) {
             System.err.println("Could not parse JSON object");
             return null;
@@ -227,8 +242,7 @@ public class Client implements Runnable, Closeable {
         try (Scanner scanner = new Scanner(System.in)) {
             String email = scanner.nextLine();
             sendRequest(new Message(true, Message.Head.REG, email));
-            boolean answer = true; //TODO receive answer from server
-            return answer;
+            return authAnswer;
         }
     }
 }

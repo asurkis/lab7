@@ -6,6 +6,7 @@ import com.sun.mail.smtp.SMTPTransport;
 import db.Database;
 import db.PostgreSQLDatabase;
 
+import javax.mail.MessageAware;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
@@ -73,34 +74,39 @@ public class Server implements Runnable, AutoCloseable {
     }
 
     public void run() {
-        System.out.println(database.info());
+//        System.out.println(database.info());
         MessageProcessor messageProcessor = new MessageProcessor();
         messageProcessor.setRequestProcessor(Message.Head.REG, msg -> {
             String email = msg.getBody().toString();
             return new Message(false, Message.Head.ANSWER, createPassword(email));
         });
-        messageProcessor.setRequestProcessor(Message.Head.INFO, msg -> infoMessage());
+        messageProcessor.setRequestProcessor(Message.Head.AUTH, msg -> {
+            return new Message(false, Message.Head.ANSWER, authorize(msg.getLogin(), msg.getPassword()));
+        });
+        messageProcessor.setRequestProcessor(Message.Head.INFO, msg -> infoMessage(msg));
         messageProcessor.setRequestProcessor(Message.Head.REMOVE_FIRST, msg -> {
-            database.removeFirst();
+            database.removeFirst(database.getUserId(msg.getLogin(), msg.getPassword()));
             return null;
         });
         messageProcessor.setRequestProcessor(Message.Head.REMOVE_LAST, msg -> {
-            database.removeLast();
+            database.removeLast(database.getUserId(msg.getLogin(), msg.getPassword()));
             return null;
         });
         messageProcessor.setRequestProcessor(Message.Head.ADD, msg -> {
             if (msg.getBody() instanceof CollectionElement) {
-                database.addElement((CollectionElement) msg.getBody());
+                database.addElement((CollectionElement) msg.getBody(),
+                                     database.getUserId(msg.getLogin(), msg.getPassword()));
             }
             return null;
         });
         messageProcessor.setRequestProcessor(Message.Head.REMOVE, msg -> {
             if (msg.getBody() instanceof CollectionElement) {
-                database.removeElement((CollectionElement) msg.getBody());
+                database.removeElement((CollectionElement) msg.getBody(),
+                                        database.getUserId(msg.getLogin(), msg.getPassword()));
             }
             return null;
         });
-        messageProcessor.setRequestProcessor(Message.Head.SHOW, msg -> showMessage());
+        messageProcessor.setRequestProcessor(Message.Head.SHOW, msg -> showMessage(msg));
         messageProcessor.setRequestProcessor(Message.Head.STOP, msg -> {
             shouldRun = false;
             return null;
@@ -154,27 +160,44 @@ public class Server implements Runnable, AutoCloseable {
         }
     }
 
-    private Message infoMessage() {
-        return new Message(false, Message.Head.INFO, database.info());
+    private Message infoMessage(Message msg) {
+        return new Message(false, Message.Head.INFO, database.info(database.getUserId(msg.getLogin(), msg.getPassword())));
     }
 
-    private Message showMessage() {
-        List<CollectionElement> list = database.show();
+    private Message showMessage(Message msg) {
+        List<CollectionElement> list = database.show(database.getUserId(msg.getLogin(), msg.getPassword()));
         list.sort(CollectionElement::compareTo);
         return new Message(false, Message.Head.SHOW, list);
     }
 
-    // Generate random password for user
-    private boolean createPassword(String email) {
-        byte[] password_bytes = new byte[10];
-        new Random().nextBytes(password_bytes);
-        String password = new String(password_bytes, Charset.forName("UTF-8"));
-        try {
-            sendPassword(email, password);
-        } catch (MessagingException | InvalidMailException e) {
-            return false;
+    private char getRndChar(Random rnd) {
+        int base = rnd.nextInt(63);
+        char ret = ' ';
+        if (base < 26) {
+            ret = (char)('A' + base % 26);
+        } else if (base < 52) {
+            ret = (char)('a' + base % 26);
+        } else if (base < 62) {
+            ret = (char)('0' + base % 10);
+        } else {
+            ret = '_';
         }
-        return true;
+        return ret;
+    }
+
+    // Generate random password for user
+    private String createPassword(String email) {
+        Random rnd = new Random();
+       StringBuilder password = new StringBuilder();
+       for (int i = 0; i < 10; i++) {
+           password.append(getRndChar(rnd));
+       }
+       try {
+           sendPassword(email, password.toString());
+       } catch (MessagingException | InvalidMailException e) {
+           return "false";
+       }
+       return "true";
     }
 
     // Send password to email from gmail
@@ -214,7 +237,7 @@ public class Server implements Runnable, AutoCloseable {
         t.sendMessage(msg, msg.getAllRecipients());
         t.close();
 
-        database.add_user(email, hash(password));
+        database.addUser(email, hash(password));
     }
 
     // Get MD5 hash of password
@@ -230,22 +253,8 @@ public class Server implements Runnable, AutoCloseable {
         return "";
     }
 
-    // Return email from request
-    private String getEmailFromRequest (String request) {
-        String[] req = request.split("|");
-        return req[0];
-    }
-
-    // Return password from request
-    private String getPassswordFromRequest (String request) {
-        String[] req = request.split("|");
-        return req[1];
-    }
-
     // Return true if user successfully authorized
-    private boolean authorize (String request) {
-        String email = getEmailFromRequest (request);
-        String password = getPassswordFromRequest (request);
-        return database.check_user (email, password);
+    private String authorize (String email, String password) {
+        return (database.checkUser (email, password) ? "true" : "false");
     }
 }

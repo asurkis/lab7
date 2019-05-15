@@ -1,5 +1,7 @@
 package net;
 
+import com.sun.security.ntlm.Client;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
@@ -19,18 +21,27 @@ public class Message implements Serializable {
         REG,
         AUTH,
         ANSWER,
-        ;
     }
 
     private boolean isRequest;
     private Head head;
     private Object body;
     private Date creationDate = new Date();
+    private String login;
+    private String password;
 
     public Message(boolean isRequest, Head head, Object body) {
         this.isRequest = isRequest;
         this.head = head;
         this.body = body;
+    }
+
+    public Message(boolean isRequest, Head head, Object body, String login, String password) {
+        this.isRequest = isRequest;
+        this.head = head;
+        this.body = body;
+        this.login = login;
+        this.password = password;
     }
 
     @Override
@@ -54,6 +65,14 @@ public class Message implements Serializable {
 
     public Object getBody() {
         return body;
+    }
+
+    public String getLogin() {
+        return login;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public Date getCreationDate() {
