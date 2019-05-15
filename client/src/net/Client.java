@@ -87,6 +87,7 @@ public class Client implements Runnable, Closeable {
     }
 
     public void run() {
+        while (!authorize());
         try (Scanner scanner = new Scanner(System.in)) {
             ConsoleInterface cli = new ConsoleInterface(scanner);
             cli.setCommand("exit", line -> shouldRun = false);
@@ -207,7 +208,6 @@ public class Client implements Runnable, Closeable {
     }
 
     // Return true if user successfully authorized
-    // TODO call in needed place
     private boolean authorize () {
         System.out.println("Type 'auth' to authorize and 'reg' to register");
         try (Scanner scanner = new Scanner(System.in)) {
@@ -231,7 +231,7 @@ public class Client implements Runnable, Closeable {
             String email = scanner.nextLine();
             System.out.println("Type your password: ");
             String password = scanner.nextLine();
-            sendRequest(new Message(true, Message.Head.AUTH, email + "|" + password));
+            sendRequest(new Message(true, Message.Head.AUTH, null, email, hash(password)));
         }
         return false;
     }
