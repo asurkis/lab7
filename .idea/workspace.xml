@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="fd9f9210-65b6-4762-966d-346a8a50fc7f" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/server/src/db/Database.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/db/Database.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" afterDir="false" />
-    </list>
+    <list default="true" id="fd9f9210-65b6-4762-966d-346a8a50fc7f" name="Default Changelist" comment="" />
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -59,7 +56,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/client/src/cli/UnknownCommandException.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="30">
@@ -68,11 +65,20 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="361">
               <caret line="127" column="49" lean-forward="true" selection-start-line="127" selection-start-column="49" selection-end-line="127" selection-end-column="49" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/server/src/net/InvalidMailException.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="120">
+              <caret line="8" column="9" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
             </state>
           </provider>
         </entry>
@@ -108,12 +114,12 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/server/src/net/InvalidMailException.java" />
         <option value="$PROJECT_DIR$/shared/src/net/Message.java" />
         <option value="$PROJECT_DIR$/server/src/net/Server.java" />
         <option value="$PROJECT_DIR$/client/src/net/Client.java" />
         <option value="$PROJECT_DIR$/server/src/db/Database.java" />
         <option value="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" />
+        <option value="$PROJECT_DIR$/server/src/net/InvalidMailException.java" />
       </list>
     </option>
   </component>
@@ -249,18 +255,18 @@
       <workItem from="1557764926966" duration="2542000" />
       <workItem from="1557772605929" duration="619000" />
       <workItem from="1557828513569" duration="3461000" />
-      <workItem from="1557902797342" duration="6337000" />
+      <workItem from="1557902797342" duration="6594000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="14744000" />
+    <option name="totallyTimeSpent" value="15001000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="30" width="1920" height="1050" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.12540022" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.12540022" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Image Layers" order="2" />
       <window_info id="Designer" order="3" />
@@ -295,24 +301,10 @@
     <option name="version" value="1" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/server/src/net/InvalidMailException.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="20" lean-forward="true" selection-start-line="20" selection-end-line="20" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/client/src/cli/ConsoleInterface.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="60">
           <caret line="7" column="13" selection-start-line="7" selection-start-column="13" selection-end-line="7" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/client/src/cli/UnknownCommandException.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="37" selection-start-line="2" selection-start-column="37" selection-end-line="2" selection-end-column="54" />
         </state>
       </provider>
     </entry>
@@ -370,6 +362,20 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="361">
           <caret line="127" column="49" lean-forward="true" selection-start-line="127" selection-start-column="49" selection-end-line="127" selection-end-column="49" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/server/src/net/InvalidMailException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="8" column="9" selection-start-line="8" selection-start-column="9" selection-end-line="8" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/client/src/cli/UnknownCommandException.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="30">
+          <caret line="2" column="37" selection-start-line="2" selection-start-column="37" selection-end-line="2" selection-end-column="54" />
         </state>
       </provider>
     </entry>

@@ -8,11 +8,6 @@ public class UnknownCommandException extends Exception {
         this.commandName = commandName;
     }
 
-    @Override
-    public String getMessage() {
-        return super.getMessage();
-    }
-
     public String getCommandName() {
         return commandName;
     }
