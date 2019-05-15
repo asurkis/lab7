@@ -240,12 +240,12 @@ public class Server implements Runnable, AutoCloseable {
         database.addUser(email, hash(password));
     }
 
-    // Get MD5 hash of password
+    // Get MD2 hash of password
     private String hash (String password) {
         try {
             byte[] passwordBytes = password.getBytes("UTF-8");
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] passwordHash = md5.digest(passwordBytes);
+            MessageDigest md2 = MessageDigest.getInstance("MD2");
+            byte[] passwordHash = md2.digest(passwordBytes);
             return passwordHash.toString();
         } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
             e.printStackTrace();
