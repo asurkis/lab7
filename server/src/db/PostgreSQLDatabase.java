@@ -119,13 +119,13 @@ public class PostgreSQLDatabase implements Database {
     }
 
     @Override
-    public void addUser (String email, String password) {
+    public void addUser (String email, String userPassword) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7_users" +
                     "(email, password)" +
                     "VALUES (?, ?)");
             statement.setString(1, email);
-            statement.setString(2, password);
+            statement.setString(2, userPassword);
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -133,13 +133,13 @@ public class PostgreSQLDatabase implements Database {
     }
 
     @Override
-    public boolean checkUser(String email, String password) {
+    public boolean checkUser(String email, String userPassword) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE" +
                     "email = ? AND " +
                     "password = ?");
             statement.setString(1, email);
-            statement.setString(2, password);
+            statement.setString(2, userPassword);
             statement.execute();
             return (statement.getFetchSize() != 0 ? true : false);
         } catch (SQLException e) {
@@ -175,13 +175,13 @@ public class PostgreSQLDatabase implements Database {
     }
 
     @Override
-    public int getUserId(String email, String passoword) {
+    public int getUserId(String email, String userPassword) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT id FROM lab7_users WHERE" +
                     "email = ? AND " +
                     "password = ?");
             statement.setString(1, email);
-            statement.setString(2, password);
+            statement.setString(2, userPassword);
             statement.execute();
             return statement.getResultSet().getInt("id");
         } catch (SQLException e) {

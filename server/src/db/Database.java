@@ -12,7 +12,7 @@ public interface Database extends AutoCloseable {
     void removeElement(CollectionElement element, int user_id);
     void removeFirst(int userId);
     void removeLast(int userId);
-    void addUser(String email, String password);
-    boolean checkUser(String email, String password);
-    int getUserId(String email, String password);
+    void addUser(String email, String userPassword);
+    boolean checkUser(String email, String userPassword);
+    int getUserId(String email, String userPassword);
 }
