@@ -11,16 +11,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fd9f9210-65b6-4762-966d-346a8a50fc7f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/artifacts/client_jar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/artifacts/client_jar.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/artifacts/server_jar.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/artifacts/server_jar.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/META-INF/MANIFEST.MF" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/client/src/net/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/net/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/META-INF/MANIFEST.MF" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/src/net/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/net/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shared/src/net/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/shared/src/net/Message.java" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -37,8 +29,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/server/src/net/Server.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1425">
-              <caret line="95" column="11" lean-forward="true" selection-start-line="95" selection-start-column="11" selection-end-line="95" selection-end-column="11" />
+            <state relative-caret-position="3975">
+              <caret line="267" column="18" lean-forward="true" selection-start-line="267" selection-start-column="18" selection-end-line="267" selection-end-column="18" />
               <folding>
                 <element signature="imports" expanded="true" />
               </folding>
@@ -132,9 +124,9 @@
         <option value="$PROJECT_DIR$/server/src/net/InvalidMailException.java" />
         <option value="$PROJECT_DIR$/client/src/cli/UnknownCommandException.java" />
         <option value="$PROJECT_DIR$/shared/src/net/Message.java" />
-        <option value="$PROJECT_DIR$/server/src/net/Server.java" />
         <option value="$PROJECT_DIR$/server/src/db/PostgreSQLDatabase.java" />
         <option value="$PROJECT_DIR$/client/src/net/Client.java" />
+        <option value="$PROJECT_DIR$/server/src/net/Server.java" />
       </list>
     </option>
   </component>
@@ -294,12 +286,12 @@
       <workItem from="1557902797342" duration="7938000" />
       <workItem from="1557924443646" duration="6681000" />
       <workItem from="1558002067193" duration="1230000" />
-      <workItem from="1558253228331" duration="2448000" />
+      <workItem from="1558253228331" duration="3060000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="26704000" />
+    <option name="totallyTimeSpent" value="27316000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="30" width="1920" height="1050" extended-state="6" />
@@ -446,8 +438,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/server/src/net/Server.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1425">
-          <caret line="95" column="11" lean-forward="true" selection-start-line="95" selection-start-column="11" selection-end-line="95" selection-end-column="11" />
+        <state relative-caret-position="3975">
+          <caret line="267" column="18" lean-forward="true" selection-start-line="267" selection-start-column="18" selection-end-line="267" selection-end-column="18" />
           <folding>
             <element signature="imports" expanded="true" />
           </folding>
