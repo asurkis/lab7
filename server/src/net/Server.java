@@ -6,12 +6,14 @@ import com.sun.mail.smtp.SMTPTransport;
 import db.Database;
 import db.PostgreSQLDatabase;
 
-import javax.mail.MessageAware;
+import javax.mail.*;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.*;
+import java.math.BigInteger;
+import java.net.InetAddress;
 import java.security.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -195,59 +197,72 @@ public class Server implements Runnable, AutoCloseable {
        try {
            sendPassword(email, password.toString());
        } catch (MessagingException | InvalidMailException e) {
+           e.printStackTrace();
            return "false";
        }
        return "true";
     }
 
-    // Send password to email from gmail
-    private void sendPassword(String email, String password) throws MessagingException, InvalidMailException {
-        Pattern patter = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}");
-        Matcher mat = patter.matcher(email);
+    class Mailing {
+        public void send(final String msgTheme, final String msgContent, final String msgResiver) throws Exception {
+            final String username = "itmop3113lab7bot@gmail.com";
+            final String password = "p3113lab7bot";
 
-        // Check mail for valid
-        if(!mat.matches()) {
-            throw new InvalidMailException(email);
+            Properties prop = new Properties();
+            prop.put("mail.smtp.host", "smtp.gmail.com");
+            prop.put("mail.smtp.port", "587");
+            prop.put("mail.smtp.auth", "true");
+            prop.put("mail.smtp.starttls.enable", "true");
+
+            Session session = Session.getInstance(prop,
+                    new Authenticator() {
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(username, password);
+                        }
+                    });
+
+            try {
+                javax.mail.Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress("from@gmail.com"));
+                message.setRecipients(
+                        javax.mail.Message.RecipientType.TO,
+                        InternetAddress.parse(msgResiver)
+                );
+
+                message.setSubject(msgTheme);
+                message.setText(msgContent);
+
+                Transport.send(message);
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
         }
 
-        Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-        final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+    }
 
-        Properties props = System.getProperties();
-        props.setProperty("mail.smtps.host", "smtp.gmail.com");
-        props.setProperty("mail.smtp.socketFactory.class", SSL_FACTORY);
-        props.setProperty("mail.smtp.socketFactory.fallback", "false");
-        props.setProperty("mail.smtp.port", "465");
-        props.setProperty("mail.smtp.socketFactory.port", "465");
-        props.setProperty("mail.smtps.auth", "true");
-        props.put("mail.smtps.quitwait", "false");
+    // Send password to email from gmail
+    private void sendPassword(String email, String password) throws MessagingException, InvalidMailException {
+        try {
+            new Mailing().send("password", password, email);
+        } catch (Exception skip) {
 
-        Session session = Session.getInstance(props, null);
-
-        final MimeMessage msg = new MimeMessage(session);
-
-        msg.setFrom(new InternetAddress(email));
-        msg.setSubject("Your password");
-        msg.setText(password, "utf-8");
-        msg.setSentDate(new Date());
-
-        SMTPTransport t = (SMTPTransport)session.getTransport();
-
-        t.connect("smtp.google.com", "itmop3113lab7bot@gmail.com", "p3113lab7bot");
-        t.sendMessage(msg, msg.getAllRecipients());
-        t.close();
+        }
 
         database.addUser(email, hash(password));
     }
 
-    // Get MD5 hash of password
+    // Get MD2 hash of password
     private String hash (String password) {
         try {
-            byte[] passwordBytes = password.getBytes("UTF-8");
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] passwordHash = md5.digest(passwordBytes);
-            return passwordHash.toString();
-        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            MessageDigest md2 = MessageDigest.getInstance("MD2");
+            byte[] messageDigest = md2.digest(password.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+            String passwordHash = no.toString();
+            while (passwordHash.length() < 32) {
+                passwordHash = "0" + passwordHash;
+            }
+            return passwordHash;
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return "";
@@ -255,6 +270,8 @@ public class Server implements Runnable, AutoCloseable {
 
     // Return true if user successfully authorized
     private String authorize (String email, String password) {
-        return (database.checkUser (email, password) ? "true" : "false");
+        boolean answer = database.checkUser (email, password);
+        System.out.println(answer);
+        return (answer ? "true" : "false");
     }
 }

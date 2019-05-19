@@ -20,20 +20,20 @@ public class PostgreSQLDatabase implements Database {
 
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS lab7_users (" +
+                            "id SERIAL," +
+                            "email VARCHAR NOT NULL," +
+                            "password VARCHAR NOT NULL)"
+            );
+            statement.execute();
+            statement = connection.prepareStatement(
                     "CREATE TABLE IF NOT EXISTS LAB7 (" +
                             "NAME VARCHAR NOT NULL," +
                             "SIZE REAL NOT NULL," +
                             "POSITION_X REAL NOT NULL," +
                             "POSITION_Y REAL NOT NULL," +
-                            "CREATION_DATE TIMESTAMPTZ NOT NULL" +
-                            "user_id NOT NULL REFERENCES lab7_users(id)");
-            statement.execute();
-            statement = connection.prepareStatement(
-                    "CREATE TABLE IF NOT EXISTS lab7_users (" +
-                            "id INT PRIMARY KEY NOT NULL AUTOINCREMENT," +
-                            "email VARCHAR NOT NULL," +
-                            "password VARCHAR NOT NULL)"
-            );
+                            "CREATION_DATE TIMESTAMPTZ NOT NULL," +
+                            "user_id INTEGER NOT NULL)");
             statement.execute();
         }
     }
@@ -135,13 +135,15 @@ public class PostgreSQLDatabase implements Database {
     @Override
     public boolean checkUser(String email, String userPassword) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
-            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE" +
+            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE " +
                     "email = ? AND " +
                     "password = ?");
             statement.setString(1, email);
             statement.setString(2, userPassword);
             statement.execute();
-            return (statement.getFetchSize() != 0 ? true : false);
+            ResultSet r = statement.getResultSet();
+            r.next();
+            return (r.getInt(1) != 0);
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -183,7 +185,9 @@ public class PostgreSQLDatabase implements Database {
             statement.setString(1, email);
             statement.setString(2, userPassword);
             statement.execute();
-            return statement.getResultSet().getInt("id");
+            ResultSet r = statement.getResultSet();
+            r.next();
+            return r.getInt("id");
         } catch (SQLException e) {
             e.printStackTrace();
         }

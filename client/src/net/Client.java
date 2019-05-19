@@ -9,6 +9,7 @@ import com.google.gson.JsonParseException;
 import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -81,14 +82,16 @@ public class Client implements Runnable, Closeable {
                 list.forEach(System.out::println);
             }
         });
-        messageProcessor.setResponseProcessor(Message.Head.ANSWER, msg ->
-                authAnswer = (msg.getBody() == "true" ? true : false)
+        messageProcessor.setResponseProcessor(Message.Head.ANSWER, msg -> {
+                authAnswer = (msg.getBody() == "true");
+                System.out.println(msg.getBody());
+            }
         );
     }
 
     public void run() {
-        while (!authorize());
         try (Scanner scanner = new Scanner(System.in)) {
+            while (!authorize(scanner)) ;
             ConsoleInterface cli = new ConsoleInterface(scanner);
             cli.setCommand("exit", line -> shouldRun = false);
             cli.setCommand("stop",
@@ -194,55 +197,54 @@ public class Client implements Runnable, Closeable {
         }
     }
 
-    // Get MD5 hash of password
+    // Get MD2 hash of password
     private String hash (String password) {
         try {
-            byte[] passwordBytes = password.getBytes("UTF-8");
-            MessageDigest md5 = MessageDigest.getInstance("MD5");
-            byte[] passwordHash = md5.digest(passwordBytes);
-            return passwordHash.toString();
-        } catch (UnsupportedEncodingException | NoSuchAlgorithmException e) {
+            MessageDigest md2 = MessageDigest.getInstance("MD2");
+            byte[] messageDigest = md2.digest(password.getBytes());
+            BigInteger no = new BigInteger(1, messageDigest);
+            String passwordHash = no.toString();
+            while (passwordHash.length() < 32) {
+                passwordHash = "0" + passwordHash;
+            }
+            return passwordHash;
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return "";
     }
 
     // Return true if user successfully authorized
-    private boolean authorize () {
+    private boolean authorize(Scanner scanner) {
         System.out.println("Type 'auth' to authorize and 'reg' to register");
-        try (Scanner scanner = new Scanner(System.in)) {
-            ConsoleInterface cli = new ConsoleInterface(scanner);
-            cli.setCommand("auth", line -> shouldRun = false);
-            cli.setCommand("reg",
-                    line -> register());
+        ConsoleInterface cli = new ConsoleInterface(scanner);
+        boolean[] registered = {true};
+        cli.setCommand("auth", line -> registered[0] = false);
+        cli.setCommand("reg",
+                line -> register(scanner));
 
-            while (shouldRun) {
-                try {
-                    cli.execNextLine();
-                } catch (UnknownCommandException e) {
-                    System.err.println(e.getMessage());
-                } catch (NoSuchElementException ignored) {
-                    shouldRun = false;
-                }
+        while (registered[0] && !authAnswer) {
+            try {
+                cli.execNextLine();
+            } catch (UnknownCommandException e) {
+                System.err.println(e.getMessage());
+            } catch (NoSuchElementException ignored) {
+                registered[0] = false;
             }
         }
         System.out.println("Type your email to authorize: ");
-        try (Scanner scanner = new Scanner(System.in)) {
-            String email = scanner.nextLine();
-            System.out.println("Type your password: ");
-            String password = scanner.nextLine();
-            sendRequest(new Message(true, Message.Head.AUTH, null, email, hash(password)));
-        }
+        String email = scanner.nextLine();
+        System.out.println("Type your password: ");
+        String password = scanner.nextLine();
+        sendRequest(new Message(true, Message.Head.AUTH, null, email, hash(password)));
         return false;
     }
 
     // Return true if user successfully authorized
-    private boolean register() {
+    private boolean register(Scanner scanner) {
         System.out.println("Type your email: ");
-        try (Scanner scanner = new Scanner(System.in)) {
-            String email = scanner.nextLine();
-            sendRequest(new Message(true, Message.Head.REG, email));
-            return authAnswer;
-        }
+        String email = scanner.nextLine();
+        sendRequest(new Message(true, Message.Head.REG, email));
+        return authAnswer;
     }
 }
