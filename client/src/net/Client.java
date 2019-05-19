@@ -77,7 +77,7 @@ public class Client implements Runnable, Closeable {
             loggedIn = Boolean.TRUE.equals(msg.getBody());
             System.out.println(msg.getBody());
         });
-        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, System.out::println);
+        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, msg -> System.out.println(msg.getBody()));
     }
 
     public void run() {
@@ -198,7 +198,7 @@ public class Client implements Runnable, Closeable {
         System.out.print("Password: ");
         String password = String.valueOf(System.console().readPassword());
         System.err.println(password);
-        
+
         login = line.trim();
         this.password = password;
 
