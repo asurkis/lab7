@@ -74,7 +74,12 @@ public class Client implements Runnable, Closeable {
         });
 
         messageProcessor.setResponseProcessor(PacketMessage.Head.REGISTER, msg -> {
-            System.out.println("We sent your password to the email, use it to log in");
+            if (msg.getBody().equals("OK")) {
+                System.out.println("We sent your password to the email, use it to log in");
+            } else {
+                System.out.println("Something wrong with email!\n" +
+                        "Check email or use another one");
+            }
         });
         messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, msg -> {
             loggedIn = Boolean.TRUE.equals(msg.getBody());

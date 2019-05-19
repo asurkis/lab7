@@ -194,4 +194,20 @@ public class PostgreSQLDatabase implements Database {
         }
         return -1;
     }
+
+    @Override
+    public boolean consistsUser(String email) {
+        try (Connection connection = DriverManager.getConnection(uri, user, password)) {
+            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE " +
+                    "email = ?");
+            statement.setString(1, email);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) != 0;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

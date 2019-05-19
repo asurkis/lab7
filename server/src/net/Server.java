@@ -72,7 +72,8 @@ public class Server implements Runnable, AutoCloseable {
         MessageProcessor messageProcessor = new MessageProcessor();
         messageProcessor.setRequestProcessor(PacketMessage.Head.REGISTER, msg -> {
             String email = msg.getBody().toString();
-            return new PacketMessage(false, PacketMessage.Head.REGISTER, createPassword(email));
+            return new PacketMessage(false, PacketMessage.Head.REGISTER,
+                    (createPassword(email) ? "OK" : "failed"));
         });
         messageProcessor.setRequestProcessor(PacketMessage.Head.LOGIN, msg -> {
             return new PacketMessage(false, PacketMessage.Head.LOGIN, authorize(msg.getLogin(), msg.getPasswordHash()));
@@ -182,6 +183,7 @@ public class Server implements Runnable, AutoCloseable {
 
     // Generate random password for user
     private boolean createPassword(String email) {
+        if (database.consistsUser(email)) return false;
         Random rnd = new Random();
         StringBuilder password = new StringBuilder();
         for (int i = 0; i < 10; i++) {
