@@ -73,12 +73,11 @@ public class Client implements Runnable, Closeable {
             }
         });
 
-        Consumer<PacketMessage> answerProcessor = msg -> {
+        messageProcessor.setResponseProcessor(PacketMessage.Head.REGISTER, msg -> {
             loggedIn = Boolean.TRUE.equals(msg.getBody());
             System.out.println(msg.getBody());
-        };
-        messageProcessor.setResponseProcessor(PacketMessage.Head.REGISTER, answerProcessor);
-        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, answerProcessor);
+        });
+        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, System.out::println);
     }
 
     public void run() {
