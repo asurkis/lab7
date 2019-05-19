@@ -74,10 +74,12 @@ public class Client implements Runnable, Closeable {
         });
 
         messageProcessor.setResponseProcessor(PacketMessage.Head.REGISTER, msg -> {
-            loggedIn = Boolean.TRUE.equals(msg.getBody());
-            System.out.println(msg.getBody());
+            System.out.println("We sent your password to the email, use it to log in");
         });
-        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, msg -> System.out.println(msg.getBody()));
+        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, msg -> {
+            loggedIn = Boolean.TRUE.equals(msg.getBody());
+            System.out.println((loggedIn ? "You successfully authorized" : "Something went wrong! Try again now or later"));
+        });
     }
 
     public void run() {
@@ -86,7 +88,6 @@ public class Client implements Runnable, Closeable {
             authContext.setCommand("login", line -> sendRequest(loginMessage(line)));
             authContext.setCommand("register", line -> sendRequest(registerMessage(line)));
 
-//            while (!authorize(scanner)) ;
             ConsoleInterface defaultContext = new ConsoleInterface(scanner);
             defaultContext.setCommand("exit", line -> shouldRun = false);
             defaultContext.setCommand("stop",
@@ -114,6 +115,7 @@ public class Client implements Runnable, Closeable {
             while (shouldRun) {
                 try {
                     ConsoleInterface currentContext = loggedIn ? defaultContext : authContext;
+                    if (!loggedIn) printLoginMessage();
                     currentContext.execNextLine();
                 } catch (UnknownCommandException e) {
                     System.err.println(e.getMessage());
@@ -122,6 +124,12 @@ public class Client implements Runnable, Closeable {
                 }
             }
         }
+    }
+
+    private void printLoginMessage() {
+        System.out.println("Type:\n" +
+                "login 'email' to authorize or\n" +
+                "register 'email' to register (password will be sent to the email)");
     }
 
     @Override
@@ -208,38 +216,4 @@ public class Client implements Runnable, Closeable {
     private PacketMessage registerMessage(String line) {
         return new PacketMessage(true, PacketMessage.Head.REGISTER, line.trim());
     }
-
-    /* // Return true if user successfully authorized
-    private boolean authorize(Scanner scanner) {
-        System.out.println("Type 'login' or 'register'");
-        ConsoleInterface cli = new ConsoleInterface(scanner);
-        boolean[] registered = {true};
-        cli.setCommand("auth", line -> registered[0] = false);
-        cli.setCommand("reg",
-                line -> register(scanner));
-
-        while (registered[0] && !loggedIn) {
-            try {
-                cli.execNextLine();
-            } catch (UnknownCommandException e) {
-                System.err.println(e.getMessage());
-            } catch (NoSuchElementException ignored) {
-                registered[0] = false;
-            }
-        }
-        System.out.println("Type your email to authorize: ");
-        String email = scanner.nextLine();
-        System.out.println("Type your password: ");
-        String password = scanner.nextLine();
-        sendRequest(new PacketMessage(true, PacketMessage.Head.LOGIN, null, email, md2(password)));
-        return false;
-    }
-
-    // Return true if user successfully authorized
-    private boolean register(Scanner scanner) {
-        System.out.println("Type your email: ");
-        String email = scanner.nextLine();
-        sendRequest(new PacketMessage(true, PacketMessage.Head.REGISTER, email));
-        return loggedIn;
-    } */
 }

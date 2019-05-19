@@ -54,8 +54,8 @@ public class Server implements Runnable, AutoCloseable {
             throw new InvalidCommandLineArgumentException();
         }
 
-//        String password = new String(System.console().readPassword("Password: "));
-        String password = "";
+        String password = new String(System.console().readPassword("Password: "));
+//        String password = "";
         database = new PostgreSQLDatabase(args[1], args[2], password);
 
         channel = DatagramChannel.open();
