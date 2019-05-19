@@ -6,20 +6,18 @@ import cli.UnknownCommandException;
 import collection.CollectionElement;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
-import com.sun.org.apache.xml.internal.security.algorithms.MessageDigestAlgorithm;
+import utils.Utils;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 public class Client implements Runnable, Closeable {
     public static void main(String[] args) {
@@ -43,17 +41,9 @@ public class Client implements Runnable, Closeable {
 
     private int port;
 
-    private boolean authAnswer = false;
-    private static String login = "";
-    private static String password = "";
-
-    public static String getLogin() {
-        return login;
-    }
-
-    public static String getPassword() {
-        return password;
-    }
+    private boolean loggedIn = false;
+    private String login = "";
+    private String password = "";
 
     public Client(String[] args) throws IOException, InvalidCommandLineArgumentException {
         if (args.length < 2) {
@@ -75,49 +65,57 @@ public class Client implements Runnable, Closeable {
         socket = new DatagramSocket();
         socket.setSoTimeout(2000);
 
-        messageProcessor.setResponseProcessor(Message.Head.INFO, msg -> System.out.println(msg.getBody()));
-        messageProcessor.setResponseProcessor(Message.Head.SHOW, msg -> {
+        messageProcessor.setResponseProcessor(PacketMessage.Head.INFO, msg -> System.out.println(msg.getBody()));
+        messageProcessor.setResponseProcessor(PacketMessage.Head.SHOW, msg -> {
             if (msg.getBody() instanceof List) {
                 List list = (List) msg.getBody();
                 list.forEach(System.out::println);
             }
         });
-        messageProcessor.setResponseProcessor(Message.Head.ANSWER, msg -> {
-                authAnswer = (msg.getBody() == "true");
-                System.out.println(msg.getBody());
-            }
-        );
+
+        Consumer<PacketMessage> answerProcessor = msg -> {
+            loggedIn = Boolean.TRUE.equals(msg.getBody());
+            System.out.println(msg.getBody());
+        };
+        messageProcessor.setResponseProcessor(PacketMessage.Head.REGISTER, answerProcessor);
+        messageProcessor.setResponseProcessor(PacketMessage.Head.LOGIN, answerProcessor);
     }
 
     public void run() {
         try (Scanner scanner = new Scanner(System.in)) {
-            while (!authorize(scanner)) ;
-            ConsoleInterface cli = new ConsoleInterface(scanner);
-            cli.setCommand("exit", line -> shouldRun = false);
-            cli.setCommand("stop",
-                    line -> sendRequest(new Message(true, Message.Head.STOP, null, login, password)));
-            cli.setCommand("info",
-                    line -> sendRequest(new Message(true, Message.Head.INFO, null, login, password)));
-            cli.setCommand("remove_first",
-                    line -> sendRequest(new Message(true, Message.Head.REMOVE_FIRST, null, login, password)));
-            cli.setCommand("remove_last",
-                    line -> sendRequest(new Message(true, Message.Head.REMOVE_LAST, null, login, password)));
-            cli.setCommand("add",
-                    line -> sendRequest(messageWithElement(Message.Head.ADD, line)));
-            cli.setCommand("remove",
-                    line -> sendRequest(messageWithElement(Message.Head.REMOVE, line)));
-            cli.setCommand("show",
-                    line -> sendRequest(new Message(true, Message.Head.SHOW, null, login, password)));
-            cli.setCommand("load",
-                    line -> sendRequest(new Message(true, Message.Head.LOAD, null, login, password)));
-            cli.setCommand("save",
-                    line -> sendRequest(new Message(true, Message.Head.SAVE, null, login, password)));
-            cli.setCommand("import",
+            ConsoleInterface authContext = new ConsoleInterface(scanner);
+            authContext.setCommand("login", line -> sendRequest(loginMessage(line)));
+            authContext.setCommand("register", line -> sendRequest(registerMessage(line)));
+
+//            while (!authorize(scanner)) ;
+            ConsoleInterface defaultContext = new ConsoleInterface(scanner);
+            defaultContext.setCommand("exit", line -> shouldRun = false);
+            defaultContext.setCommand("stop",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.STOP, null, login, password)));
+            defaultContext.setCommand("info",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.INFO, null, login, password)));
+            defaultContext.setCommand("remove_first",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_FIRST, null, login, password)));
+            defaultContext.setCommand("remove_last",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_LAST, null, login, password)));
+            defaultContext.setCommand("add",
+                    line -> sendRequest(messageWithElement(PacketMessage.Head.ADD, line)));
+            defaultContext.setCommand("remove",
+                    line -> sendRequest(messageWithElement(PacketMessage.Head.REMOVE, line)));
+            defaultContext.setCommand("show",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SHOW, null, login, password)));
+            defaultContext.setCommand("load",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.LOAD, null, login, password)));
+            defaultContext.setCommand("save",
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SAVE, null, login, password)));
+            defaultContext.setCommand("import",
                     line -> sendRequest(importMessage(line)));
+            defaultContext.setCommand("logout", line -> loggedIn = false);
 
             while (shouldRun) {
                 try {
-                    cli.execNextLine();
+                    ConsoleInterface currentContext = loggedIn ? defaultContext : authContext;
+                    currentContext.execNextLine();
                 } catch (UnknownCommandException e) {
                     System.err.println(e.getMessage());
                 } catch (NoSuchElementException ignored) {
@@ -132,14 +130,14 @@ public class Client implements Runnable, Closeable {
         socket.close();
     }
 
-    private void sendRequest(Message message) {
-        if (message == null) {
+    private void sendRequest(PacketMessage packetMessage) {
+        if (packetMessage == null) {
             return;
         }
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         try (ObjectOutputStream oo = new ObjectOutputStream(outputStream)) {
-            oo.writeObject(message);
+            oo.writeObject(packetMessage);
         } catch (IOException ignored) {
         }
 
@@ -154,7 +152,7 @@ public class Client implements Runnable, Closeable {
             return;
         }
 
-        if (!messageProcessor.hasResponseProcessor(message.getHead())) {
+        if (!messageProcessor.hasResponseProcessor(packetMessage.getHead())) {
             return;
         }
 
@@ -167,8 +165,8 @@ public class Client implements Runnable, Closeable {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(receiveBytes);
             try (ObjectInputStream oi = new ObjectInputStream(inputStream)) {
                 Object obj = oi.readObject();
-                if (obj instanceof Message) {
-                    messageProcessor.process((Message) obj);
+                if (obj instanceof PacketMessage) {
+                    messageProcessor.process((PacketMessage) obj);
                 }
             } catch (ClassNotFoundException ignored) {
             }
@@ -177,53 +175,51 @@ public class Client implements Runnable, Closeable {
         }
     }
 
-    private Message messageWithElement(Message.Head head, String line) {
+    private PacketMessage messageWithElement(PacketMessage.Head head, String line) {
         try {
             CollectionElement element = gson.fromJson(line, CollectionElement.class);
-            return new Message(true, head, element, login, password);
+            return new PacketMessage(true, head, element, login, password);
         } catch (JsonParseException e) {
             System.err.println("Could not parse JSON object");
             return null;
         }
     }
 
-    private Message importMessage(String line) {
+    private PacketMessage importMessage(String line) {
         try {
             String str = new String(Files.readAllBytes(new File(line.trim()).toPath()));
-            return new Message(true, Message.Head.IMPORT, str);
+            return new PacketMessage(true, PacketMessage.Head.IMPORT, str);
         } catch (IOException | InvalidPathException e) {
             System.err.println("Could not read file: " + e.getMessage());
             return null;
         }
     }
 
-    // Get MD2 hash of password
-    private String hash (String password) {
-        try {
-            MessageDigest md2 = MessageDigest.getInstance("MD2");
-            byte[] messageDigest = md2.digest(password.getBytes());
-            BigInteger no = new BigInteger(1, messageDigest);
-            String passwordHash = no.toString();
-            while (passwordHash.length() < 32) {
-                passwordHash = "0" + passwordHash;
-            }
-            return passwordHash;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
+    private PacketMessage loginMessage(String line) {
+        System.out.print("Password: ");
+        String password = String.valueOf(System.console().readPassword());
+        System.err.println(password);
+        
+        login = line.trim();
+        this.password = password;
+
+        return new PacketMessage(true, PacketMessage.Head.LOGIN, null, line.trim(), Utils.md2(password));
     }
 
-    // Return true if user successfully authorized
+    private PacketMessage registerMessage(String line) {
+        return new PacketMessage(true, PacketMessage.Head.REGISTER, line.trim());
+    }
+
+    /* // Return true if user successfully authorized
     private boolean authorize(Scanner scanner) {
-        System.out.println("Type 'auth' to authorize and 'reg' to register");
+        System.out.println("Type 'login' or 'register'");
         ConsoleInterface cli = new ConsoleInterface(scanner);
         boolean[] registered = {true};
         cli.setCommand("auth", line -> registered[0] = false);
         cli.setCommand("reg",
                 line -> register(scanner));
 
-        while (registered[0] && !authAnswer) {
+        while (registered[0] && !loggedIn) {
             try {
                 cli.execNextLine();
             } catch (UnknownCommandException e) {
@@ -236,7 +232,7 @@ public class Client implements Runnable, Closeable {
         String email = scanner.nextLine();
         System.out.println("Type your password: ");
         String password = scanner.nextLine();
-        sendRequest(new Message(true, Message.Head.AUTH, null, email, hash(password)));
+        sendRequest(new PacketMessage(true, PacketMessage.Head.LOGIN, null, email, md2(password)));
         return false;
     }
 
@@ -244,7 +240,7 @@ public class Client implements Runnable, Closeable {
     private boolean register(Scanner scanner) {
         System.out.println("Type your email: ");
         String email = scanner.nextLine();
-        sendRequest(new Message(true, Message.Head.REG, email));
-        return authAnswer;
-    }
+        sendRequest(new PacketMessage(true, PacketMessage.Head.REGISTER, email));
+        return loggedIn;
+    } */
 }

@@ -8,15 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="shared" exported="" />
-    <orderEntry type="library" name="org.postgresql:postgresql:42.2.5" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/javax.mail.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" exported="" name="org.postgresql:postgresql:42.2.5" level="project" />
+    <orderEntry type="library" exported="" name="com.sun.mail:javax.mail:1.6.2" level="project" />
   </component>
 </module>
