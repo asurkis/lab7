@@ -205,7 +205,6 @@ public class Client implements Runnable, Closeable {
     private PacketMessage loginMessage(String line) {
         System.out.print("Password: ");
         String password = String.valueOf(System.console().readPassword());
-        System.err.println(password);
 
         login = line.trim();
         this.password = password;
