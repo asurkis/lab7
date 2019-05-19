@@ -6,33 +6,33 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class MessageProcessor {
-    private Map<Message.Head, Function<Message, Message>> requestMap = new HashMap<>();
-    private Map<Message.Head, Consumer<Message>> responseMap = new HashMap<>();
+    private Map<PacketMessage.Head, Function<PacketMessage, PacketMessage>> requestMap = new HashMap<>();
+    private Map<PacketMessage.Head, Consumer<PacketMessage>> responseMap = new HashMap<>();
 
-    public void setRequestProcessor(Message.Head type, Function<Message, Message> processor) {
+    public void setRequestProcessor(PacketMessage.Head type, Function<PacketMessage, PacketMessage> processor) {
         requestMap.put(type, processor);
     }
 
-    public void setResponseProcessor(Message.Head type, Consumer<Message> processor) {
+    public void setResponseProcessor(PacketMessage.Head type, Consumer<PacketMessage> processor) {
         responseMap.put(type, processor);
     }
 
-    public boolean hasRequestProcessor(Message.Head type) {
+    public boolean hasRequestProcessor(PacketMessage.Head type) {
         return requestMap.containsKey(type);
     }
 
-    public boolean hasResponseProcessor(Message.Head type) {
+    public boolean hasResponseProcessor(PacketMessage.Head type) {
         return responseMap.containsKey(type);
     }
 
-    public Message process(Message message) {
-        if (message.isRequest()) {
-            if (requestMap.containsKey(message.getHead())) {
-                return requestMap.get(message.getHead()).apply(message);
+    public PacketMessage process(PacketMessage packetMessage) {
+        if (packetMessage.isRequest()) {
+            if (requestMap.containsKey(packetMessage.getHead())) {
+                return requestMap.get(packetMessage.getHead()).apply(packetMessage);
             }
         } else {
-            if (responseMap.containsKey(message.getHead())) {
-                responseMap.get(message.getHead()).accept(message);
+            if (responseMap.containsKey(packetMessage.getHead())) {
+                responseMap.get(packetMessage.getHead()).accept(packetMessage);
             }
         }
 

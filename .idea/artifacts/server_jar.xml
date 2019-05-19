@@ -4,8 +4,9 @@
     <root id="archive" name="server.jar">
       <element id="module-output" name="server" />
       <element id="module-output" name="shared" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/server/javax.mail.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.m2/repository/com/sun/mail/javax.mail/1.6.2/javax.mail-1.6.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/.m2/repository/org/postgresql/postgresql/42.2.5/postgresql-42.2.5.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

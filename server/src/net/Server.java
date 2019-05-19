@@ -2,9 +2,9 @@ package net;
 
 import cli.InvalidCommandLineArgumentException;
 import collection.CollectionElement;
-import com.sun.mail.smtp.SMTPTransport;
 import db.Database;
 import db.PostgreSQLDatabase;
+import utils.Utils;
 
 import javax.mail.*;
 import javax.mail.MessagingException;
@@ -12,19 +12,12 @@ import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.*;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.security.*;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
-import java.nio.charset.Charset;
-import java.security.Security;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Server implements Runnable, AutoCloseable {
     public static void main(String[] args) {
@@ -61,8 +54,8 @@ public class Server implements Runnable, AutoCloseable {
             throw new InvalidCommandLineArgumentException();
         }
 
-         String password = new String(System.console().readPassword("Password: "));
-//        String password = "";
+//        String password = new String(System.console().readPassword("Password: "));
+        String password = "";
         database = new PostgreSQLDatabase(args[1], args[2], password);
 
         channel = DatagramChannel.open();
@@ -76,40 +69,39 @@ public class Server implements Runnable, AutoCloseable {
     }
 
     public void run() {
-//        System.out.println(database.info());
         MessageProcessor messageProcessor = new MessageProcessor();
-        messageProcessor.setRequestProcessor(Message.Head.REG, msg -> {
+        messageProcessor.setRequestProcessor(PacketMessage.Head.REGISTER, msg -> {
             String email = msg.getBody().toString();
-            return new Message(false, Message.Head.ANSWER, createPassword(email));
+            return new PacketMessage(false, PacketMessage.Head.REGISTER, createPassword(email));
         });
-        messageProcessor.setRequestProcessor(Message.Head.AUTH, msg -> {
-            return new Message(false, Message.Head.ANSWER, authorize(msg.getLogin(), msg.getPassword()));
+        messageProcessor.setRequestProcessor(PacketMessage.Head.LOGIN, msg -> {
+            return new PacketMessage(false, PacketMessage.Head.LOGIN, authorize(msg.getLogin(), msg.getPasswordHash()));
         });
-        messageProcessor.setRequestProcessor(Message.Head.INFO, msg -> infoMessage(msg));
-        messageProcessor.setRequestProcessor(Message.Head.REMOVE_FIRST, msg -> {
-            database.removeFirst(database.getUserId(msg.getLogin(), msg.getPassword()));
+        messageProcessor.setRequestProcessor(PacketMessage.Head.INFO, this::infoMessage);
+        messageProcessor.setRequestProcessor(PacketMessage.Head.REMOVE_FIRST, msg -> {
+            database.removeFirst(database.getUserId(msg.getLogin(), msg.getPasswordHash()));
             return null;
         });
-        messageProcessor.setRequestProcessor(Message.Head.REMOVE_LAST, msg -> {
-            database.removeLast(database.getUserId(msg.getLogin(), msg.getPassword()));
+        messageProcessor.setRequestProcessor(PacketMessage.Head.REMOVE_LAST, msg -> {
+            database.removeLast(database.getUserId(msg.getLogin(), msg.getPasswordHash()));
             return null;
         });
-        messageProcessor.setRequestProcessor(Message.Head.ADD, msg -> {
+        messageProcessor.setRequestProcessor(PacketMessage.Head.ADD, msg -> {
             if (msg.getBody() instanceof CollectionElement) {
                 database.addElement((CollectionElement) msg.getBody(),
-                                     database.getUserId(msg.getLogin(), msg.getPassword()));
+                        database.getUserId(msg.getLogin(), msg.getPasswordHash()));
             }
             return null;
         });
-        messageProcessor.setRequestProcessor(Message.Head.REMOVE, msg -> {
+        messageProcessor.setRequestProcessor(PacketMessage.Head.REMOVE, msg -> {
             if (msg.getBody() instanceof CollectionElement) {
                 database.removeElement((CollectionElement) msg.getBody(),
-                                        database.getUserId(msg.getLogin(), msg.getPassword()));
+                        database.getUserId(msg.getLogin(), msg.getPasswordHash()));
             }
             return null;
         });
-        messageProcessor.setRequestProcessor(Message.Head.SHOW, msg -> showMessage(msg));
-        messageProcessor.setRequestProcessor(Message.Head.STOP, msg -> {
+        messageProcessor.setRequestProcessor(PacketMessage.Head.SHOW, this::showMessage);
+        messageProcessor.setRequestProcessor(PacketMessage.Head.STOP, msg -> {
             shouldRun = false;
             return null;
         });
@@ -127,12 +119,12 @@ public class Server implements Runnable, AutoCloseable {
             byte[] bytes = buffer.array();
             InputStream inputStream = new ByteArrayInputStream(bytes);
 
-            Message request;
+            PacketMessage request;
 
             try (ObjectInputStream oi = new ObjectInputStream(inputStream)) {
                 Object obj = oi.readObject();
-                if (obj instanceof Message) {
-                    request = (Message) obj;
+                if (obj instanceof PacketMessage) {
+                    request = (PacketMessage) obj;
                 } else {
                     continue;
                 }
@@ -146,7 +138,7 @@ public class Server implements Runnable, AutoCloseable {
             }
 
             new Thread(() -> {
-                Message response = messageProcessor.process(request);
+                PacketMessage response = messageProcessor.process(request);
                 if (response == null) {
                     return;
                 }
@@ -162,25 +154,26 @@ public class Server implements Runnable, AutoCloseable {
         }
     }
 
-    private Message infoMessage(Message msg) {
-        return new Message(false, Message.Head.INFO, database.info(database.getUserId(msg.getLogin(), msg.getPassword())));
+    private PacketMessage infoMessage(PacketMessage msg) {
+        return new PacketMessage(false, PacketMessage.Head.INFO,
+                database.info(database.getUserId(msg.getLogin(), msg.getPasswordHash())));
     }
 
-    private Message showMessage(Message msg) {
-        List<CollectionElement> list = database.show(database.getUserId(msg.getLogin(), msg.getPassword()));
+    private PacketMessage showMessage(PacketMessage msg) {
+        List<CollectionElement> list = database.show(database.getUserId(msg.getLogin(), msg.getPasswordHash()));
         list.sort(CollectionElement::compareTo);
-        return new Message(false, Message.Head.SHOW, list);
+        return new PacketMessage(false, PacketMessage.Head.SHOW, list);
     }
 
     private char getRndChar(Random rnd) {
         int base = rnd.nextInt(63);
         char ret = ' ';
         if (base < 26) {
-            ret = (char)('A' + base % 26);
+            ret = (char) ('A' + base % 26);
         } else if (base < 52) {
-            ret = (char)('a' + base % 26);
+            ret = (char) ('a' + base % 26);
         } else if (base < 62) {
-            ret = (char)('0' + base % 10);
+            ret = (char) ('0' + base % 10);
         } else {
             ret = '_';
         }
@@ -188,90 +181,58 @@ public class Server implements Runnable, AutoCloseable {
     }
 
     // Generate random password for user
-    private String createPassword(String email) {
+    private boolean createPassword(String email) {
         Random rnd = new Random();
-       StringBuilder password = new StringBuilder();
-       for (int i = 0; i < 10; i++) {
-           password.append(getRndChar(rnd));
-       }
-       try {
-           sendPassword(email, password.toString());
-       } catch (MessagingException | InvalidMailException e) {
-           e.printStackTrace();
-           return "false";
-       }
-       return "true";
+        StringBuilder password = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            password.append(getRndChar(rnd));
+        }
+        try {
+            sendUserPassword(email, password.toString());
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
-    class Mailing {
-        public void send(final String msgTheme, final String msgContent, final String msgResiver) throws Exception {
-            final String username = "itmop3113lab7bot@gmail.com";
-            final String password = "p3113lab7bot";
+    private void sendPasswordMail(String passwordToSend, String receiverAddress) throws MessagingException {
+        Properties prop = new Properties();
+        prop.put("mail.smtp.host", "smtp.gmail.com");
+        prop.put("mail.smtp.port", "587");
+        prop.put("mail.smtp.auth", "true");
+        prop.put("mail.smtp.starttls.enable", "true");
 
-            Properties prop = new Properties();
-            prop.put("mail.smtp.host", "smtp.gmail.com");
-            prop.put("mail.smtp.port", "587");
-            prop.put("mail.smtp.auth", "true");
-            prop.put("mail.smtp.starttls.enable", "true");
+        Session session = Session.getInstance(prop,
+                new Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(
+                                "itmop3113lab7bot@gmail.com",
+                                "p3113lab7bot");
+                    }
+                });
 
-            Session session = Session.getInstance(prop,
-                    new Authenticator() {
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(username, password);
-                        }
-                    });
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("from@gmail.com"));
+        message.setRecipients(
+                Message.RecipientType.TO,
+                InternetAddress.parse(receiverAddress)
+        );
 
-            try {
-                javax.mail.Message message = new MimeMessage(session);
-                message.setFrom(new InternetAddress("from@gmail.com"));
-                message.setRecipients(
-                        javax.mail.Message.RecipientType.TO,
-                        InternetAddress.parse(msgResiver)
-                );
+        message.setSubject("Password for Lab7");
+        message.setText(passwordToSend);
 
-                message.setSubject(msgTheme);
-                message.setText(msgContent);
-
-                Transport.send(message);
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
-        }
-
+        Transport.send(message);
     }
 
     // Send password to email from gmail
-    private void sendPassword(String email, String password) throws MessagingException, InvalidMailException {
-        try {
-            new Mailing().send("password", password, email);
-        } catch (Exception skip) {
-
-        }
-
-        database.addUser(email, hash(password));
-    }
-
-    // Get MD2 hash of password
-    private String hash (String password) {
-        try {
-            MessageDigest md2 = MessageDigest.getInstance("MD2");
-            byte[] messageDigest = md2.digest(password.getBytes());
-            BigInteger no = new BigInteger(1, messageDigest);
-            String passwordHash = no.toString();
-            while (passwordHash.length() < 32) {
-                passwordHash = "0" + passwordHash;
-            }
-            return passwordHash;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return "";
+    private void sendUserPassword(String email, String password) throws MessagingException {
+        sendPasswordMail(password, email);
+        database.addUser(email, Utils.md2(password));
     }
 
     // Return true if user successfully authorized
-    private String authorize (String email, String password) {
-        boolean answer = database.checkUser (email, password);
-        System.out.println(answer);
-        return (answer ? "true" : "false");
+    private boolean authorize(String email, String password) {
+        return database.checkUser(email, password);
     }
 }

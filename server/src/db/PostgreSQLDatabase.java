@@ -27,25 +27,26 @@ public class PostgreSQLDatabase implements Database {
             );
             statement.execute();
             statement = connection.prepareStatement(
-                    "CREATE TABLE IF NOT EXISTS LAB7 (" +
-                            "NAME VARCHAR NOT NULL," +
-                            "SIZE REAL NOT NULL," +
-                            "POSITION_X REAL NOT NULL," +
-                            "POSITION_Y REAL NOT NULL," +
-                            "CREATION_DATE TIMESTAMPTZ NOT NULL," +
+                    "CREATE TABLE IF NOT EXISTS lab7 (" +
+                            "name VARCHAR NOT NULL," +
+                            "size REAL NOT NULL," +
+                            "position_x REAL NOT NULL," +
+                            "position_y REAL NOT NULL," +
+                            "creation_date TIMESTAMPTZ NOT NULL," +
                             "user_id INTEGER NOT NULL)");
             statement.execute();
         }
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+    }
 
     @Override
     public List<CollectionElement> show(int userId) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             List<CollectionElement> result = new ArrayList<>();
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM LAB7 WHERE user_id = ?");
+            PreparedStatement statement = connection.prepareStatement("SELECT * FROM lab7 WHERE user_id = ?");
             statement.setInt(1, userId);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
@@ -67,7 +68,7 @@ public class PostgreSQLDatabase implements Database {
     @Override
     public CollectionInfo info(int userId) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
-            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM LAB7 WHERE user_id = ?");
+            PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM lab7 WHERE user_id = ?");
             statement.setInt(1, userId);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
@@ -82,8 +83,8 @@ public class PostgreSQLDatabase implements Database {
     @Override
     public void addElement(CollectionElement element, int userId) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO LAB7" +
-                    "(NAME, SIZE, POSITION_X, POSITION_Y, CREATION_DATE, user_id)" +
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7 " +
+                    "(name, size, position_x, position_y, creation_date, user_id)" +
                     "VALUES (?, ?, ?, ?, ?, ?)");
             statement.setString(1, element.getName());
             statement.setDouble(2, element.getSize());
@@ -101,11 +102,11 @@ public class PostgreSQLDatabase implements Database {
     public void removeElement(CollectionElement element, int userId) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
-                    "DELETE FROM LAB7 WHERE " +
-                            "NAME = ? AND " +
-                            "SIZE = ? AND " +
-                            "POSITION_X = ? AND " +
-                            "POSITION_Y = ? AND " +
+                    "DELETE FROM lab7 WHERE " +
+                            "name = ? AND " +
+                            "size = ? AND " +
+                            "position_x = ? AND " +
+                            "position_y = ? AND " +
                             "user_id = ?");
             statement.setString(1, element.getName());
             statement.setDouble(2, element.getSize());
@@ -119,9 +120,9 @@ public class PostgreSQLDatabase implements Database {
     }
 
     @Override
-    public void addUser (String email, String userPassword) {
+    public void addUser(String email, String userPassword) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
-            PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7_users" +
+            PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7_users " +
                     "(email, password)" +
                     "VALUES (?, ?)");
             statement.setString(1, email);
@@ -140,10 +141,10 @@ public class PostgreSQLDatabase implements Database {
                     "password = ?");
             statement.setString(1, email);
             statement.setString(2, userPassword);
-            statement.execute();
-            ResultSet r = statement.getResultSet();
-            r.next();
-            return (r.getInt(1) != 0);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) != 0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -154,8 +155,8 @@ public class PostgreSQLDatabase implements Database {
     public void removeFirst(int user_id) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
-                    "DELETE FROM LAB7 WHERE NAME IN (" +
-                            "SELECT NAME FROM LAB7 WHERE user_id = ? ORDER BY SIZE DESC LIMIT 1)");
+                    "DELETE FROM lab7 WHERE name IN (" +
+                            "SELECT name FROM lab7 WHERE user_id = ? ORDER BY size DESC LIMIT 1)");
             statement.setInt(1, user_id);
             statement.execute();
         } catch (SQLException e) {
@@ -167,8 +168,8 @@ public class PostgreSQLDatabase implements Database {
     public void removeLast(int userId) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
-                    "DELETE FROM LAB7 WHERE NAME IN (" +
-                            "SELECT NAME FROM LAB7 WHERE user_id = ? ORDER BY SIZE ASC LIMIT 1)");
+                    "DELETE FROM lab7 WHERE name IN (" +
+                            "SELECT name FROM LAB7 WHERE user_id = ? ORDER BY size ASC LIMIT 1)");
             statement.setInt(1, userId);
             statement.execute();
         } catch (SQLException e) {
@@ -177,17 +178,17 @@ public class PostgreSQLDatabase implements Database {
     }
 
     @Override
-    public int getUserId(String email, String userPassword) {
+    public int getUserId(String email, String passwordHash) {
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
-            PreparedStatement statement = connection.prepareStatement("SELECT id FROM lab7_users WHERE" +
+            PreparedStatement statement = connection.prepareStatement("SELECT id FROM lab7_users WHERE " +
                     "email = ? AND " +
                     "password = ?");
             statement.setString(1, email);
-            statement.setString(2, userPassword);
-            statement.execute();
-            ResultSet r = statement.getResultSet();
-            r.next();
-            return r.getInt("id");
+            statement.setString(2, passwordHash);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }

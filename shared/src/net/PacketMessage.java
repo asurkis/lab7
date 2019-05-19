@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.Objects;
 
-public class Message implements Serializable {
+public class PacketMessage implements Serializable {
     public static enum Head implements Serializable {
         INFO,
         REMOVE_FIRST,
@@ -16,9 +16,8 @@ public class Message implements Serializable {
         LOAD,
         SAVE,
         STOP,
-        REG,
-        AUTH,
-        ANSWER,
+        REGISTER,
+        LOGIN,
     }
 
     private boolean isRequest;
@@ -26,20 +25,20 @@ public class Message implements Serializable {
     private Object body;
     private Date creationDate = new Date();
     private String login;
-    private String password;
+    private String passwordHash;
 
-    public Message(boolean isRequest, Head head, Object body) {
+    public PacketMessage(boolean isRequest, Head head, Object body) {
         this.isRequest = isRequest;
         this.head = head;
         this.body = body;
     }
 
-    public Message(boolean isRequest, Head head, Object body, String login, String password) {
+    public PacketMessage(boolean isRequest, Head head, Object body, String login, String passwordHash) {
         this.isRequest = isRequest;
         this.head = head;
         this.body = body;
         this.login = login;
-        this.password = password;
+        this.passwordHash = passwordHash;
     }
 
     @Override
@@ -50,7 +49,7 @@ public class Message implements Serializable {
 
     @Override
     public int hashCode() {
-        return Objects.hash(Message.class, isRequest, head, body, creationDate);
+        return Objects.hash(PacketMessage.class, isRequest, head, body, creationDate);
     }
 
     public boolean isRequest() {
@@ -69,8 +68,8 @@ public class Message implements Serializable {
         return login;
     }
 
-    public String getPassword() {
-        return password;
+    public String getPasswordHash() {
+        return passwordHash;
     }
 
     public Date getCreationDate() {
