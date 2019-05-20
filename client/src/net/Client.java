@@ -64,7 +64,7 @@ public class Client implements Runnable, Closeable {
         }
 
         socket = new DatagramSocket();
-        socket.setSoTimeout(2000);
+        socket.setSoTimeout(10_000);
 
         messageProcessor.setResponseProcessor(PacketMessage.Head.INFO, msg -> System.out.println(msg.getBody()));
         messageProcessor.setResponseProcessor(PacketMessage.Head.SHOW, msg -> {
