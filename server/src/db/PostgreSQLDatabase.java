@@ -44,6 +44,7 @@ public class PostgreSQLDatabase implements Database {
 
     @Override
     public List<CollectionElement> show(int userId) {
+        System.out.println("Request 'show' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             List<CollectionElement> result = new ArrayList<>();
             PreparedStatement statement = connection.prepareStatement("SELECT * FROM lab7 WHERE user_id = ?");
@@ -58,30 +59,36 @@ public class PostgreSQLDatabase implements Database {
                 result.add(new CollectionElement(name, size, posX, posY)
                         .withCreationDate(creationDate.toLocalDateTime()));
             }
+            System.out.println("Success");
             return result;
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Error");
         return null;
     }
 
     @Override
     public CollectionInfo info(int userId) {
+        System.out.println("Request 'info' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM lab7 WHERE user_id = ?");
             statement.setInt(1, userId);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
+                System.out.println("Success");
                 return new CollectionInfo(LocalDateTime.MIN, rs.getInt(1));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Error");
         return null;
     }
 
     @Override
     public void addElement(CollectionElement element, int userId) {
+        System.out.println("Request 'add' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7 " +
                     "(name, size, position_x, position_y, creation_date, user_id)" +
@@ -93,13 +100,16 @@ public class PostgreSQLDatabase implements Database {
             statement.setTimestamp(5, Timestamp.valueOf(element.getCreationDate()));
             statement.setInt(6, userId);
             statement.execute();
+            System.out.println("Success");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
     }
 
     @Override
     public void removeElement(CollectionElement element, int userId) {
+        System.out.println("Request 'remove' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
                     "DELETE FROM lab7 WHERE " +
@@ -114,13 +124,16 @@ public class PostgreSQLDatabase implements Database {
             statement.setDouble(4, element.getPosition().getY());
             statement.setInt(5, userId);
             statement.execute();
+            System.out.println("Success");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
     }
 
     @Override
     public void addUser(String email, String userPassword) {
+        System.out.println("Request 'register' from e-mail " + email);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("INSERT INTO lab7_users " +
                     "(email, password)" +
@@ -128,13 +141,16 @@ public class PostgreSQLDatabase implements Database {
             statement.setString(1, email);
             statement.setString(2, userPassword);
             statement.execute();
+            System.out.println("Success");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
     }
 
     @Override
     public boolean checkUser(String email, String userPassword) {
+        System.out.println("Check for user " + email);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE " +
                     "email = ? AND " +
@@ -143,42 +159,52 @@ public class PostgreSQLDatabase implements Database {
             statement.setString(2, userPassword);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
-                return rs.getInt(1) != 0;
+                boolean result = rs.getInt(1) != 0;
+                System.out.println(result);
+                return result;
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
         return false;
     }
 
     @Override
-    public void removeFirst(int user_id) {
+    public void removeFirst(int userId) {
+        System.out.println("Request 'remove_first' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
                     "DELETE FROM lab7 WHERE name IN (" +
                             "SELECT name FROM lab7 WHERE user_id = ? ORDER BY size DESC LIMIT 1)");
-            statement.setInt(1, user_id);
+            statement.setInt(1, userId);
             statement.execute();
+            System.out.println("Success");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
     }
 
     @Override
     public void removeLast(int userId) {
+        System.out.println("Request 'remove_last' from user #" + userId);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement(
                     "DELETE FROM lab7 WHERE name IN (" +
                             "SELECT name FROM LAB7 WHERE user_id = ? ORDER BY size ASC LIMIT 1)");
             statement.setInt(1, userId);
             statement.execute();
+            System.out.println("Success");
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("Error");
         }
     }
 
     @Override
     public int getUserId(String email, String passwordHash) {
+        System.out.println("Check user id for " + email);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT id FROM lab7_users WHERE " +
                     "email = ? AND " +
@@ -186,27 +212,34 @@ public class PostgreSQLDatabase implements Database {
             statement.setString(1, email);
             statement.setString(2, passwordHash);
             ResultSet rs = statement.executeQuery();
-            rs.next();
-            return rs.getInt(1);
+            if (rs.next()) {
+                System.out.println("Success");
+                return rs.getInt(1);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Error");
         return -1;
     }
 
     @Override
     public boolean consistsUser(String email) {
+        System.out.println("Check for user existence " + email);
         try (Connection connection = DriverManager.getConnection(uri, user, password)) {
             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(id) FROM lab7_users WHERE " +
                     "email = ?");
             statement.setString(1, email);
             ResultSet rs = statement.executeQuery();
             if (rs.next()) {
-                return rs.getInt(1) != 0;
+                boolean result = rs.getInt(1) != 0;
+                System.out.println(result);
+                return result;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Error");
         return false;
     }
 }
