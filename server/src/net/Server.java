@@ -223,8 +223,11 @@ public class Server implements Runnable, AutoCloseable {
 
         message.setSubject("Password for Lab7");
         message.setText(passwordToSend);
-
-        Transport.send(message);
+        try {
+            Transport.send(message);
+        } catch (Exception skip) {
+            System.out.println("Password --> " + passwordToSend);
+        }
     }
 
     // Send password to email from gmail
