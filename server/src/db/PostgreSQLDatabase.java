@@ -185,7 +185,6 @@ public class PostgreSQLDatabase implements Database {
                     "password = ?");
             statement.setString(1, email);
             statement.setString(2, passwordHash);
-            System.out.println("Password -> " + passwordHash);
             ResultSet rs = statement.executeQuery();
             rs.next();
             return rs.getInt(1);
