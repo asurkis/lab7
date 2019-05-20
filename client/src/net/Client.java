@@ -44,6 +44,7 @@ public class Client implements Runnable, Closeable {
     private boolean loggedIn = false;
     private String login = "";
     private String password = "";
+    private String hashPassword = "";
 
     public Client(String[] args) throws IOException, InvalidCommandLineArgumentException {
         if (args.length < 2) {
@@ -96,23 +97,23 @@ public class Client implements Runnable, Closeable {
             ConsoleInterface defaultContext = new ConsoleInterface(scanner);
             defaultContext.setCommand("exit", line -> shouldRun = false);
             defaultContext.setCommand("stop",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.STOP, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.STOP, null, login, hashPassword)));
             defaultContext.setCommand("info",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.INFO, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.INFO, null, login, hashPassword)));
             defaultContext.setCommand("remove_first",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_FIRST, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_FIRST, null, login, hashPassword)));
             defaultContext.setCommand("remove_last",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_LAST, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.REMOVE_LAST, null, login, hashPassword)));
             defaultContext.setCommand("add",
                     line -> sendRequest(messageWithElement(PacketMessage.Head.ADD, line)));
             defaultContext.setCommand("remove",
                     line -> sendRequest(messageWithElement(PacketMessage.Head.REMOVE, line)));
             defaultContext.setCommand("show",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SHOW, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SHOW, null, login, hashPassword)));
             defaultContext.setCommand("load",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.LOAD, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.LOAD, null, login, hashPassword)));
             defaultContext.setCommand("save",
-                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SAVE, null, login, password)));
+                    line -> sendRequest(new PacketMessage(true, PacketMessage.Head.SAVE, null, login, hashPassword)));
             defaultContext.setCommand("import",
                     line -> sendRequest(importMessage(line)));
             defaultContext.setCommand("logout", line -> loggedIn = false);
@@ -190,7 +191,7 @@ public class Client implements Runnable, Closeable {
     private PacketMessage messageWithElement(PacketMessage.Head head, String line) {
         try {
             CollectionElement element = gson.fromJson(line, CollectionElement.class);
-            return new PacketMessage(true, head, element, login, password);
+            return new PacketMessage(true, head, element, login, hashPassword);
         } catch (JsonParseException e) {
             System.err.println("Could not parse JSON object");
             return null;
@@ -213,6 +214,7 @@ public class Client implements Runnable, Closeable {
 
         login = line.trim();
         this.password = password;
+        this.hashPassword = Utils.md2(password);
 
         return new PacketMessage(true, PacketMessage.Head.LOGIN, null, line.trim(), Utils.md2(password));
     }
